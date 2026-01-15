@@ -1,0 +1,52 @@
+{
+  "name": "dagflowjs",
+  "type": "module",
+  "version": "0.0.0",
+  "description": "A lightweight, type-safe DAG (Directed Acyclic Graph) execution engine for TypeScript",
+  "keywords": [
+    "dag",
+    "workflow",
+    "pipeline",
+    "graph",
+    "execution",
+    "typescript",
+    "async",
+    "parallel",
+    "retry",
+    "timeout"
+  ],
+  "author": "Abdullah Saleem <a.saleem2993@gmail.com>",
+  "license": "MIT",
+  "homepage": "https://github.com/abdullah2993/dagflowjs#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/abdullah2993/dagflowjs"
+  },
+  "bugs": {
+    "url": "https://github.com/abdullah2993/dagflowjs/issues"
+  },
+  "exports": {
+    ".": "./dist/index.mjs",
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.mjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "test": "vitest",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.3",
+    "bumpp": "^10.3.2",
+    "tsdown": "^0.18.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.16"
+  }
+}
