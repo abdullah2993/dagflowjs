@@ -1,7 +1,7 @@
 {
   "name": "dagflowjs",
   "type": "module",
-  "version": "0.0.0",
+  "version": "0.2.0",
   "description": "A lightweight, type-safe DAG (Directed Acyclic Graph) execution engine for TypeScript",
   "keywords": [
     "dag",
@@ -20,7 +20,7 @@
   "homepage": "https://github.com/abdullah2993/dagflowjs#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/abdullah2993/dagflowjs"
+    "url": "git+https://github.com/abdullah2993/dagflowjs.git"
   },
   "bugs": {
     "url": "https://github.com/abdullah2993/dagflowjs/issues"

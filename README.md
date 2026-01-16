@@ -4,14 +4,14 @@ A lightweight, type-safe DAG (Directed Acyclic Graph) execution engine for TypeS
 
 ## Features
 
-- 🔄 **Dependency Management**: Define step dependencies and execute in the correct order
-- ⚡ **Parallel Execution**: Automatically runs independent steps in parallel
+- 🔄 **Dependency Management**: Define node dependencies and execute in the correct order
+- ⚡ **Parallel Execution**: Automatically runs independent nodes in parallel
 - 🔁 **Retry Logic**: Configurable retries with exponential backoff
-- ⏱️ **Timeouts**: Set timeouts per step to prevent hanging operations
+- ⏱️ **Timeouts**: Set timeouts per node to prevent hanging operations
 - 📊 **Metrics**: Track execution time, attempts, and success rates
 - ✅ **Validation**: Pre-execution validation hooks
 - 🧹 **Cleanup**: Post-execution cleanup hooks
-- 🛡️ **Error Strategies**: Choose to fail or skip steps on error
+- 🛡️ **Error Strategies**: Choose to fail or skip nodes on error
 - 📝 **TypeScript**: Full type safety with generic context types
 
 ## Installation
@@ -45,16 +45,16 @@ const logger = {
 // Create the engine
 const engine = new DagEngine<OrderContext>({ logger });
 
-// Add steps
+// Add nodes
 engine
-  .addStep({
+  .addNode({
     id: 'validate-order',
     execute: async (ctx) => {
       // Validate order exists
       return { orderStatus: 'processing' as const };
     },
   })
-  .addStep({
+  .addNode({
     id: 'process-payment',
     dependsOn: ['validate-order'],
     config: { maxRetries: 3, retryDelayMs: 1000, timeoutMs: 30000 },
@@ -63,7 +63,7 @@ engine
       return { paymentId: 'pay_12345' };
     },
   })
-  .addStep({
+  .addNode({
     id: 'reserve-inventory',
     dependsOn: ['validate-order'],
     config: { maxRetries: 2, timeoutMs: 15000 },
@@ -72,7 +72,7 @@ engine
       return { inventoryReserved: true };
     },
   })
-  .addStep({
+  .addNode({
     id: 'create-shipping-label',
     dependsOn: ['process-payment', 'reserve-inventory'],
     config: { timeoutMs: 20000 },
@@ -81,7 +81,7 @@ engine
       return { shippingLabel: 'LABEL_67890' };
     },
   })
-  .addStep({
+  .addNode({
     id: 'complete-order',
     dependsOn: ['create-shipping-label'],
     execute: async (ctx) => {
@@ -120,7 +120,7 @@ interface OrderContext {
   items: Array<{ productId: string; quantity: number }>;
   paymentMethod: 'credit_card' | 'paypal' | 'bank_transfer';
   
-  // Results from each step
+  // Results from each node
   customerValidated?: boolean;
   paymentId?: string;
   paymentStatus?: 'pending' | 'completed' | 'failed';
@@ -205,8 +205,8 @@ const logger: Logger = {
 function createOrderProcessingEngine(): DagEngine<OrderContext> {
   const engine = new DagEngine<OrderContext>({ logger });
 
-  // Step 1: Validate customer (no dependencies)
-  engine.addStep({
+  // Node 1: Validate customer (no dependencies)
+  engine.addNode({
     id: 'validate-customer',
     config: {
       timeoutMs: 5000,
@@ -223,8 +223,8 @@ function createOrderProcessingEngine(): DagEngine<OrderContext> {
     },
   });
 
-  // Step 2: Process payment (depends on customer validation)
-  engine.addStep({
+  // Node 2: Process payment (depends on customer validation)
+  engine.addNode({
     id: 'process-payment',
     dependsOn: ['validate-customer'],
     config: {
@@ -248,8 +248,8 @@ function createOrderProcessingEngine(): DagEngine<OrderContext> {
     },
   });
 
-  // Step 3: Reserve inventory (depends on customer validation, runs in parallel with payment)
-  engine.addStep({
+  // Node 3: Reserve inventory (depends on customer validation, runs in parallel with payment)
+  engine.addNode({
     id: 'reserve-inventory',
     dependsOn: ['validate-customer'],
     config: {
@@ -267,8 +267,8 @@ function createOrderProcessingEngine(): DagEngine<OrderContext> {
     },
   });
 
-  // Step 4: Get shipping address (depends on customer validation)
-  engine.addStep({
+  // Node 4: Get shipping address (depends on customer validation)
+  engine.addNode({
     id: 'get-shipping-address',
     dependsOn: ['validate-customer'],
     config: {
@@ -282,8 +282,8 @@ function createOrderProcessingEngine(): DagEngine<OrderContext> {
     },
   });
 
-  // Step 5: Create shipping label (depends on payment, inventory, and address)
-  engine.addStep({
+  // Node 5: Create shipping label (depends on payment, inventory, and address)
+  engine.addNode({
     id: 'create-shipping-label',
     dependsOn: ['process-payment', 'reserve-inventory', 'get-shipping-address'],
     config: {
@@ -311,8 +311,8 @@ function createOrderProcessingEngine(): DagEngine<OrderContext> {
     },
   });
 
-  // Step 6: Send confirmation email (depends on shipping label, can fail without breaking workflow)
-  engine.addStep({
+  // Node 6: Send confirmation email (depends on shipping label, can fail without breaking workflow)
+  engine.addNode({
     id: 'send-confirmation-email',
     dependsOn: ['create-shipping-label'],
     config: {
@@ -327,8 +327,8 @@ function createOrderProcessingEngine(): DagEngine<OrderContext> {
     },
   });
 
-  // Step 7: Complete order (depends on shipping label)
-  engine.addStep({
+  // Node 7: Complete order (depends on shipping label)
+  engine.addNode({
     id: 'complete-order',
     dependsOn: ['create-shipping-label'],
     execute: async (ctx, deps) => {
@@ -366,15 +366,15 @@ async function processOrder() {
     console.log('\n✅ Order processed successfully!');
     console.log('Final context:', JSON.stringify(result.context, null, 2));
     console.log('\n📊 Execution Metrics:');
-    console.log(`  Total steps: ${result.metrics.totalSteps}`);
-    console.log(`  Successful: ${result.metrics.successfulSteps}`);
-    console.log(`  Failed: ${result.metrics.failedSteps}`);
-    console.log(`  Skipped: ${result.metrics.skippedSteps}`);
+    console.log(`  Total nodes: ${result.metrics.totalNodes}`);
+    console.log(`  Successful: ${result.metrics.successfulNodes}`);
+    console.log(`  Failed: ${result.metrics.failedNodes}`);
+    console.log(`  Skipped: ${result.metrics.skippedNodes}`);
     console.log(`  Duration: ${(result.metrics.finishedAt! - result.metrics.startedAt) / 1000}s`);
-    console.log('\n📈 Step Details:');
-    Object.entries(result.metrics.steps).forEach(([stepId, metrics]) => {
-      console.log(`  ${stepId}:`);
-      console.log(`    Success: ${metrics.success}`);
+    console.log('\n📈 Node Details:');
+    Object.entries(result.metrics.nodes).forEach(([nodeId, metrics]) => {
+      console.log(`  ${nodeId}:`);
+      console.log(`    Status: ${metrics.status}`);
       console.log(`    Attempts: ${metrics.attempts}`);
       console.log(`    Duration: ${metrics.durationMs}ms`);
       if (metrics.error) {
@@ -426,13 +426,13 @@ Final context: {
 }
 
 📊 Execution Metrics:
-  Total steps: 7
+  Total nodes: 7
   Successful: 7
   Failed: 0
   Skipped: 0
   Duration: 0.85s
 
-📈 Step Details:
+📈 Node Details:
   validate-customer:
     Success: true
     Attempts: 1
@@ -462,12 +462,12 @@ new DagEngine<T>(deps: DagNodeDeps)
 
 #### Methods
 
-- `addStep(step: DagNode<T>): this` - Add a step to the workflow
+- `addNode(node: DagNode<T>): this` - Add a node to the workflow
 - `execute(initial: T): Promise<DagResult<T>>` - Execute the workflow
 
 ### `DagNode<T, Patch>`
 
-Interface for defining workflow steps.
+Interface for defining workflow nodes.
 
 ```typescript
 interface DagNode<T, Patch = Partial<T>> {
@@ -482,15 +482,14 @@ interface DagNode<T, Patch = Partial<T>> {
 
 ### `DagNodeConfig`
 
-Configuration options for a step.
+Configuration options for a node.
 
 ```typescript
 interface DagNodeConfig {
-  enabled?: boolean;           // Default: true
-  timeoutMs?: number;           // Step timeout in milliseconds
+  timeoutMs?: number;           // Node timeout in milliseconds
   maxRetries?: number;         // Maximum retry attempts (default: 0)
   retryDelayMs?: number;       // Base delay between retries (default: 500ms)
-  onError?: 'fail' | 'skip';  // Error handling strategy (default: 'fail')
+  onError?: 'fail' | 'skip' | 'skip-dependents';  // Error handling strategy (default: 'fail')
 }
 ```
 
